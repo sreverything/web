@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!-- initialize -->
+<html>
+    <head>
+        <title> My first Tempt</title>
+        <script src="jspsych/jspsych.js"></script>
+        <script src="jspsych/plugin-html-keyboard-response.js"></script>
+        <script src="jspsych/plugin-image-keyboard-response.js"></script> 
+        <script src="jspsych/plugin-preload.js"></script>
+        <link href="jspsych/jspsych.css" rel="stylesheet" type="text/css" />
+    </head>>
+    <body></body>
+    <script>
+        var js = initJsPsych(
+            {
+                on_finish:function(){
+                    js.data.displayData();
+                }
+            }
+        );
+        var timeline = [];
+        var preload = {
+            type: jsPsychPreload,
+            images: ['img/1988.jpg', 'img/lo.jpg']
+        }
+        timeline.push(preload);
+        // welcome-page
+        var first_page = {
+            type: jsPsychHtmlKeyboardResponse, //define the pluging
+            stimulus:'The first page of this experiments, you should do what you see in the instruction.' //using `
+        }
+        timeline.push(first_page);
+
+        // instruction-page
+        var instruction_page = {
+            type: jsPsychHtmlKeyboardResponse, //define the pluging
+            stimulus:`
+            <p>In this experiment, you need to choose which one is your favorite?</p>
+            <p>Of course, you must to choose the only one.</p>
+            <p>If you didn't hear it clearly, you can hear again by press the buttom~
+            Good lucy!</p>
+            <div style = 'width:700px;color:r;'>
+            <div style = 'float:left;'><img src='img/1988.jpg'></img>
+            <p class='big'><strong> Press the Y key</strong> </p></div>
+            <div style = 'float:right;'><img src='img/lo.jpg'></img>
+            <p class='big'><strong> Press the N key</strong></p></div>       
+            </div>           
+            <p>Let's begin!!!</p>` ,//using ` instead of'
+            post_trial_gap: 2000 //ms
+        }
+        timeline.push(instruction_page);
+        // condition 1
+        // var a_trial = { 
+        //     type:jsPsychImageKeyboardResponse,
+        //     stimulus:'img/1988.jpg',
+        //     choices:['y','n']
+        // }
+        
+        // // condition 2
+        // var b_trial = {
+        //     type:jsPsychImageKeyboardResponse,
+        //     stimulus:'img/lo.jpg',
+        //     choices:['y','n']
+        // }
+        // timeline.push(a_trial,b_trial);
+
+        // variables this is a array instead of a cell
+        var variables = [ 
+            {stimulus:'img/1988.jpg',correct_response:'y'},
+            {stimulus:'img/lo.jpg',correct_response:'n'}
+    ];
+        // gap-interval
+        var interval = {
+            type: jsPsychHtmlKeyboardResponse, //define the pluging
+            stimulus:'<div style="font-size:1000px;">o</div>',
+            choices:"NO_KEYS",
+            // trial_duration:1000, //1s
+            trial_duration: function()
+            {
+                duration = js.randomization.sampleWithoutReplacement([100,2000],1)[0]; //get the random time from array
+                return duration;
+            },
+            data:{
+                task: 'interval', //attributes
+              }
+        }
+
+        // test variable selection
+        var test_variable = {
+            type:jsPsychImageKeyboardResponse,
+            stimulus: js.timelineVariable('stimulus'),
+            choices:['y','n'],
+            data: {
+                task: 'trial' ,//attributes
+                correct_response: js.timelineVariable('correct_response'),
+              },
+              on_finish:function(data){
+                  data.correct=js.pluginAPI.compareKeys(data.response,data.correct_response);//compare with correction true/false
+                            }
+
+        }    
+
+        // test procedure
+        var test_procedure = {
+            timeline:[test_variable,interval],
+            timeline_variables: variables, // be care of big and small character
+            randomize_order: true,
+            repetitions: 2 // repeat it (2)*2 times 
+        }
+
+        timeline.push(test_procedure); 
+
+        //
+        var analysing ={
+            type: jsPsychHtmlKeyboardResponse, //define the pluging
+            stimulus:function(){
+                var trial=js.data.get().filter({task: 'trial'});
+                var trial_correct=trial.filter({correct:true});
+                var accuracy=(trial_correct.count()/trial.count()*100);
+                var rt = Math.round(trial_correct.select('rt').mean());
+                return `<p>Your responsed correctly on ${accuracy}% of this trials.</p>
+                <p>Your average response time is ${rt}ms.</p>
+                <p>something the inviter wants to know: ${trial} and ${trial_correct} .</p>`;
+
+
+            }
+        }
+        timeline.push(analysing); 
+
+        js.run(timeline);
+    </script>
+
+
+
+</html>>
